@@ -202,7 +202,7 @@ function love.update(dt)
         if input.text ~= "" and suit.Button("OK", 300, 90, 25, 20).hit then
             print("opening")
 
-            local newmap, err = pap.fromFile(input.text, true)
+            local newmap, err = pap.fromFile(input.text, false)
 
             if not newmap then
                 print("error")
