@@ -19,13 +19,19 @@ local mapMt = { --map object metatable
         forEach = function(self, brush, cb)
             --executes cb() for each tile in brush
 
-            local i = self:brushIndex(brush) --brush index
+            if not cb and type(brush) == "function" then cb = brush; brushes = self.brushes
+            else brushes = {brush}
+            end
 
-            local data = self.data[i]
+            for _,brush in ipairs(brushes) do
+                local i = self:brushIndex(brush) --brush index
 
-            for y,t in pairs(data) do
-                for x,_ in pairs(t) do
-                    cb(x,y)
+                local data = self.data[i]
+
+                for y,t in pairs(data) do
+                    for x,_ in pairs(t) do
+                        cb(x,y,brush)
+                    end
                 end
             end
         end,
