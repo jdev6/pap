@@ -24,7 +24,7 @@ Follow the instructions [here](https://love2d.org/wiki/Game_Distribution#Creatin
 
 The editor works with brushes; you don't import spritesheets, you just paint some tiles with different brushes and then you implement it how you want (see Lib)
 
-Use left click to paint with the selected brush and right click to remove
+Use left click to paint with the selected brush and right click to remove, and mouse over a tile and press left shift to edit tile data
 
 Because there is no api for file open dialogs in löve, to open a file you can drop it into the window or click 'Open' and specify the path to the file.
 
