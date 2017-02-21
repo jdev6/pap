@@ -16,10 +16,12 @@ local DRAW_AREA_H   = g.getHeight() - 45
 local MAX_CELL_SIZE = 256
 local MIN_CELL_SIZE = 3
 local TILE_COLOR    = {255,255,255, 50}
+local TILE_COLOR2    = {255,255,255, 200}
 
 local input = {text = "", value = 64, min = MIN_CELL_SIZE, max = MAX_CELL_SIZE} --for text input and cell size
 local input2 = {text = ""} --for map width
 local input3 = {text = ""} --for map height
+local editInput = {text = "", brush=nil,x=0,y=0} --for tile value edit
 
 local map = pap.fromData {
     brushes = {},
@@ -130,7 +132,7 @@ function love.update(dt)
 
             if #map.brushes > 0 and m.isDown(1) and x >= 0 and y >= 0 and x < map.width and y < map.height then
                 --Draw something
-                map:setData(x,y, selectedBrush, 1)
+                if not map:getData(x,y,selectedBrush) then map:setData(x,y, selectedBrush, 1) end
 
             elseif m.isDown(2) then
                 --Erase
@@ -273,6 +275,38 @@ function love.update(dt)
             print("set width")
             map.height = h
         end
+
+    elseif state == "edit" then
+        --edit tile data input
+
+        suit.layout:reset(155,60)
+        suit.layout:padding(10,10)
+
+        suit.Label("Enter tile data:", suit.layout:row(120, 20))
+        suit.Input(editInput, suit.layout:row(140, 20))
+        if input.text and suit.Button("OK", 300, 90, 25, 20).hit then
+            local chunk = loadstring("return " .. editInput.text)
+            if chunk then
+                local data = chunk()
+                if data then
+                    editInput.fail = false
+                    map:setData(editInput.x,editInput.y, editInput.brush, data)
+                    state = "main"
+                else
+                    editInput.fail = true
+                end
+            else
+                editInput.fail = true
+            end
+        end
+        if suit.Button("Cancel", suit.layout:row(60, 20)).hit then
+            print("cancel")
+            state = "main"
+        end
+        if editInput.fail then
+            suit.Label("Input must be a lua expression", suit.layout:row(180, 20))
+        end
+
     end
 end
 
@@ -307,17 +341,23 @@ function love.draw()
         end
     end
 
-    g.setColor(TILE_COLOR)
     for brushName,b in pairs(map.data) do
         for y,t in pairs(b) do
-            for x,_ in pairs(t) do
+            for x,v in pairs(t) do
                 if x <= map.width and y <= map.height then
-                    --draw cell
+                    --draw cell                    
+                    local mx = math.floor((m.getX() + camera.getX() - DRAW_AREA_X) / cellSize)
+                    local my = math.floor((m.getY() + camera.getY() - DRAW_AREA_Y) / cellSize)
+                    if mx == x and my == y and map:brushIndex(brushName) == selectedBrush then
+                        --highlight selected tile
+                        g.setColor(TILE_COLOR2)
+                    else
+                        g.setColor(TILE_COLOR)
+                    end
                     g.rectangle("fill", DRAW_AREA_X + x * cellSize, DRAW_AREA_Y + y * cellSize, cellSize, cellSize)
                     g.setColor(0,0,0)
                     --print text
                     g.print(map.brushes[brushName], DRAW_AREA_X + x * cellSize + 5, DRAW_AREA_Y + y * cellSize + cellSize/2 - 5)
-                    g.setColor(TILE_COLOR)
                 end
             end
         end
@@ -325,7 +365,7 @@ function love.draw()
 
     camera:unset()
 
-    if state == "new brush" or state == "map size" then
+    if state == "new brush" or state == "map size" or state == "edit" then
         g.setColor(80, 80, 80)
         g.rectangle("fill", 145,50,190,130, 4)
 
@@ -389,6 +429,22 @@ function love.keypressed(key)
     if key == "escape" then
         print("cancel")
         state = "main"
+    elseif key == "lshift" and state == "main" then
+        if inDrawArea() then
+            local x = math.floor((m.getX() + camera.getX() - DRAW_AREA_X) / cellSize)
+            local y = math.floor((m.getY() + camera.getY() - DRAW_AREA_Y) / cellSize)
+            local data = map:getData(x,y,selectedBrush)
+
+            if #map.brushes > 0 and x >= 0 and y >= 0 and x < map.width and y < map.height and data then
+                --Draw something
+                --map:setData(x,y, selectedBrush, 1)
+                state = "edit"
+                editInput.text = inspect(data):gsub("\n","")
+                editInput.brush = selectedBrush
+                editInput.x = x
+                editInput.y = y
+            end
+        end
     else
         suit.keypressed(key)
     end

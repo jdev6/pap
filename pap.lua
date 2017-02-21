@@ -26,11 +26,13 @@ local mapMt = { --map object metatable
             for _,brush in ipairs(brushes) do
                 local i = self:brushIndex(brush) --brush index
 
+                print(i,brush)
+
                 local data = self.data[i]
 
-                for y,t in pairs(data) do
-                    for x,_ in pairs(t) do
-                        cb(x,y,brush)
+                for y,t in ipairs(data) do
+                    for x,v in ipairs(t) do
+                        cb(x,y,brush,v)
                     end
                 end
             end
